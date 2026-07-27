@@ -9,7 +9,17 @@ const form = reactive<CourseForm>({
   description: '',
 })
 
+const editForm = reactive<CourseForm>({
+  code: '',
+  name: '',
+  description: '',
+})
+
 const submitting = ref(false)
+const updating = ref(false)
+const deletingId = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+
 const message = ref('')
 const formError = ref('')
 
@@ -26,9 +36,13 @@ const {
   },
 )
 
-async function createCourse() {
+function clearMessages() {
   message.value = ''
   formError.value = ''
+}
+
+async function createCourse() {
+  clearMessages()
 
   if (!form.code.trim() || !form.name.trim()) {
     formError.value = '课程代码和课程名称不能为空'
@@ -60,6 +74,85 @@ async function createCourse() {
       '课程创建失败，请检查后端服务'
   } finally {
     submitting.value = false
+  }
+}
+
+function startEditing(course: Course) {
+  clearMessages()
+
+  editingId.value = course.id
+  editForm.code = course.code
+  editForm.name = course.name
+  editForm.description = course.description || ''
+}
+
+function cancelEditing() {
+  editingId.value = null
+  editForm.code = ''
+  editForm.name = ''
+  editForm.description = ''
+}
+
+async function updateCourse(courseId: string) {
+  clearMessages()
+
+  if (!editForm.code.trim() || !editForm.name.trim()) {
+    formError.value = '课程代码和课程名称不能为空'
+    return
+  }
+
+  updating.value = true
+
+  try {
+    await api<Course>(`/api/v1/courses/${courseId}`, {
+      method: 'PATCH',
+      body: {
+        code: editForm.code.trim(),
+        name: editForm.name.trim(),
+        description: editForm.description.trim() || null,
+      },
+    })
+
+    cancelEditing()
+    message.value = '课程修改成功'
+    await refresh()
+  } catch (error: any) {
+    formError.value =
+      error?.data?.detail ||
+      error?.response?._data?.detail ||
+      '课程修改失败'
+  } finally {
+    updating.value = false
+  }
+}
+
+async function deleteCourse(course: Course) {
+  clearMessages()
+
+  const confirmed = window.confirm(
+    `确定要删除课程“${course.name}”吗？`,
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  deletingId.value = course.id
+
+  try {
+    await api(`/api/v1/courses/${course.id}`, {
+      method: 'DELETE',
+    })
+
+    message.value = '课程删除成功'
+    await refresh()
+  } catch (error: any) {
+    formError.value =
+      error?.data?.detail ||
+      error?.response?._data?.detail ||
+      '课程删除失败。课程下存在章节时不能直接删除。'
+  } finally {
+    deletingId.value = null
   }
 }
 </script>
@@ -150,25 +243,97 @@ async function createCourse() {
 
       <div v-else class="course-grid">
         <article
-          v-for="course in courses"
-          :key="course.id"
-          class="course-card"
-        >
-          <div class="course-code">
-            {{ course.code }}
-          </div>
+  v-for="course in courses"
+  :key="course.id"
+  class="course-card"
+>
+  <div v-if="editingId === course.id" class="edit-form">
+    <label>
+      <span>课程代码</span>
+      <input
+        v-model="editForm.code"
+        maxlength="50"
+      >
+    </label>
 
-          <h3>{{ course.name }}</h3>
+    <label>
+      <span>课程名称</span>
+      <input
+        v-model="editForm.name"
+        maxlength="100"
+      >
+    </label>
 
-          <p>
-            {{ course.description || '暂无课程描述' }}
-          </p>
+    <label>
+      <span>课程描述</span>
+      <textarea
+        v-model="editForm.description"
+        maxlength="1000"
+        rows="3"
+      />
+    </label>
 
-          <small>
-            创建时间：
-            {{ new Date(course.created_at).toLocaleString('zh-CN') }}
-          </small>
-        </article>
+    <div class="card-actions">
+      <button
+        class="save-button"
+        type="button"
+        :disabled="updating"
+        @click="updateCourse(course.id)"
+      >
+        {{ updating ? '保存中...' : '保存修改' }}
+      </button>
+
+      <button
+        class="cancel-button"
+        type="button"
+        :disabled="updating"
+        @click="cancelEditing"
+      >
+        取消
+      </button>
+    </div>
+  </div>
+
+  <template v-else>
+    <div class="course-code">
+      {{ course.code }}
+    </div>
+
+    <h3>{{ course.name }}</h3>
+
+    <p>
+      {{ course.description || '暂无课程描述' }}
+    </p>
+
+    <small>
+      创建时间：
+      {{ new Date(course.created_at).toLocaleString('zh-CN') }}
+    </small>
+
+    <div class="card-actions">
+      <button
+        class="edit-button"
+        type="button"
+        @click="startEditing(course)"
+      >
+        编辑
+      </button>
+
+      <button
+        class="delete-button"
+        type="button"
+        :disabled="deletingId === course.id"
+        @click="deleteCourse(course)"
+      >
+        {{
+          deletingId === course.id
+            ? '删除中...'
+            : '删除'
+        }}
+      </button>
+    </div>
+  </template>
+</article>
       </div>
     </section>
   </div>
@@ -325,7 +490,62 @@ textarea:focus {
   color: #718096;
   text-align: center;
 }
+.edit-form {
+  display: grid;
+  gap: 14px;
+}
 
+.edit-form label {
+  display: grid;
+  gap: 7px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.edit-button,
+.delete-button,
+.save-button,
+.cancel-button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.edit-button {
+  color: #2563eb;
+  background: #eaf2ff;
+}
+
+.delete-button {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.save-button {
+  color: white;
+  background: #2563eb;
+}
+
+.cancel-button {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.delete-button:disabled,
+.save-button:disabled,
+.cancel-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
 @media (max-width: 700px) {
   .course-form {
     grid-template-columns: 1fr;
