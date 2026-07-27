@@ -3,36 +3,93 @@ definePageMeta({
   title: '系统概览',
 })
 
-const statistics = [
-  {
-    title: '课程数量',
-    value: '--',
-    description: '已录入课程',
-    icon: '▤',
-    color: 'blue',
+const config = useRuntimeConfig()
+
+const {
+  data: dashboardData,
+  pending,
+  error,
+  refresh,
+} = await useAsyncData(
+  'dashboard-statistics',
+  async () => {
+    const [
+      courses,
+      chapters,
+      knowledgePoints,
+      questions,
+    ] = await Promise.all([
+      $fetch(
+        `${config.public.apiBase}/api/v1/courses`,
+      ),
+      $fetch(
+        `${config.public.apiBase}/api/v1/chapters`,
+      ),
+      $fetch(
+        `${config.public.apiBase}/api/v1/knowledge-points`,
+      ),
+      $fetch(
+        `${config.public.apiBase}/api/v1/questions`,
+        {
+          params: {
+            page: 1,
+            page_size: 1,
+          },
+        },
+      ),
+    ])
+
+    return {
+      courseCount: courses.length,
+      chapterCount: chapters.length,
+      knowledgePointCount: knowledgePoints.length,
+      questionCount: questions.total,
+    }
   },
-  {
-    title: '章节数量',
-    value: '--',
-    description: '课程章节',
-    icon: '☷',
-    color: 'cyan',
-  },
-  {
-    title: '知识点数量',
-    value: '--',
-    description: '知识体系节点',
-    icon: '◇',
-    color: 'violet',
-  },
-  {
-    title: '试题数量',
-    value: '--',
-    description: '题库有效试题',
-    icon: '✎',
-    color: 'orange',
-  },
-]
+)
+
+const statistics = computed(() => {
+  const loadingValue = pending.value ? '…' : '--'
+
+  return [
+    {
+      title: '课程数量',
+      value:
+        dashboardData.value?.courseCount
+        ?? loadingValue,
+      description: '已录入课程',
+      icon: '▤',
+      color: 'blue',
+    },
+    {
+      title: '章节数量',
+      value:
+        dashboardData.value?.chapterCount
+        ?? loadingValue,
+      description: '课程章节',
+      icon: '☷',
+      color: 'cyan',
+    },
+    {
+      title: '知识点数量',
+      value:
+        dashboardData.value?.knowledgePointCount
+        ?? loadingValue,
+      description: '知识体系节点',
+      icon: '◇',
+      color: 'violet',
+    },
+    {
+      title: '试题数量',
+      value:
+        dashboardData.value?.questionCount
+        ?? loadingValue,
+      description: '题库有效试题',
+      icon: '✎',
+      color: 'orange',
+    },
+  ]
+})
 
 const quickActions = [
   {
@@ -73,7 +130,13 @@ const quickActions = [
         <span>→</span>
       </NuxtLink>
     </section>
+    <div v-if="error" class="error-banner">
+      <span>无法连接后端服务，请确认 FastAPI 已启动。</span>
 
+      <button type="button" @click="refresh()">
+        重新连接
+      </button>
+    </div>
     <section class="statistics-grid">
       <article
         v-for="item in statistics"
@@ -442,5 +505,27 @@ const quickActions = [
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+}
+
+.error-banner button {
+  padding: 7px 12px;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  background: #dc2626;
+  cursor: pointer;
 }
 </style>
