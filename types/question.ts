@@ -46,3 +46,15 @@ export interface QuestionForm {
   source: string
   knowledge_point_ids: string[]
 }
+export interface QuestionVersion {
+  id: string
+  question_id: string
+  version: number
+  change_type: string
+  snapshot: Question
+  created_at: string
+}
+
+export interface QuestionRestoreRequest {
+  version: number
+}

@@ -15,6 +15,9 @@ const difficultyMax = ref('')
 
 const page = ref(1)
 const pageSize = ref(10)
+const deletingId = ref<string | null>(null)
+const actionMessage = ref('')
+const actionError = ref('')
 
 const {
   data: knowledgePoints,
@@ -126,6 +129,42 @@ async function resetFilters() {
   page.value = 1
 
   await refreshQuestions()
+}
+
+async function deleteQuestion(question: Question) {
+  actionMessage.value = ''
+  actionError.value = ''
+
+  const confirmed = window.confirm(
+    `确定要删除试题“${question.stem}”吗？`,
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  deletingId.value = question.id
+
+  try {
+    await api(`/api/v1/questions/${question.id}`, {
+      method: 'DELETE',
+    })
+
+    actionMessage.value = '试题删除成功'
+
+    if (questions.value.length === 1 && page.value > 1) {
+      page.value -= 1
+    } else {
+      await refreshQuestions()
+    }
+  } catch (error: any) {
+    actionError.value =
+      error?.data?.detail ||
+      error?.response?._data?.detail ||
+      '试题删除失败'
+  } finally {
+    deletingId.value = null
+  }
 }
 
 function previousPage() {
@@ -266,7 +305,13 @@ function nextPage() {
       <div v-else-if="questions.length === 0" class="empty-state">
         没有找到符合条件的试题。
       </div>
+      <p v-if="actionMessage" class="success-message">
+  {{ actionMessage }}
+</p>
 
+<p v-if="actionError" class="error-message">
+  {{ actionError }}
+</p>
       <div v-else class="question-list">
         <article
           v-for="(question, index) in questions"
@@ -356,6 +401,27 @@ function nextPage() {
               </p>
             </div>
           </details>
+          <div class="question-actions">
+  <NuxtLink
+    class="history-link"
+    :to="`/questions/${question.id}/versions`"
+  >
+    版本历史
+  </NuxtLink>
+
+  <button
+    class="delete-button"
+    type="button"
+    :disabled="deletingId === question.id"
+    @click="deleteQuestion(question)"
+  >
+    {{
+      deletingId === question.id
+        ? '删除中...'
+        : '删除试题'
+    }}
+  </button>
+</div>
         </article>
       </div>
 
@@ -704,6 +770,42 @@ select:focus {
   border-radius: 12px;
   color: #718096;
   text-align: center;
+}
+
+.question-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.history-link {
+  padding: 9px 14px;
+  border-radius: 8px;
+  color: #7c3aed;
+  background: #ede9fe;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.delete-button {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 8px;
+  color: #dc2626;
+  background: #fee2e2;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.delete-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.success-message {
+  margin: 0 0 16px;
+  color: #15803d;
 }
 
 @media (max-width: 1100px) {
