@@ -298,6 +298,17 @@ async function createQuestion() {
             />
           </label>
         </div>
+        <div class="latex-preview">
+  <div class="preview-header">
+    <h3>公式实时预览</h3>
+    <span>修改 LaTeX 源码后会自动更新</span>
+  </div>
+
+  <LatexRenderer
+    :source="form.latex_source"
+    :display-mode="true"
+  />
+</div>
       </section>
 
       <section v-if="hasOptions" class="panel">
@@ -729,6 +740,29 @@ input[type='range'] {
 .error-message {
   margin: 0 0 12px;
   color: #dc2626;
+}
+
+.latex-preview {
+  margin-top: 20px;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.preview-header h3 {
+  margin: 0;
+  color: #334155;
+  font-size: 16px;
+}
+
+.preview-header span {
+  color: #718096;
+  font-size: 13px;
 }
 
 @media (max-width: 1000px) {

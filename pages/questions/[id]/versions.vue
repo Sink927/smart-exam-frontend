@@ -187,10 +187,23 @@ async function restoreVersion(versionNumber: number) {
 
           <h2>{{ version.snapshot.stem }}</h2>
 
-          <pre
-            v-if="version.snapshot.latex_source"
-            class="latex-source"
-          >{{ version.snapshot.latex_source }}</pre>
+          <div
+  v-if="version.snapshot.latex_source"
+  class="formula-block"
+>
+  <LatexRenderer
+    :source="version.snapshot.latex_source"
+    :display-mode="true"
+  />
+
+  <details class="source-details">
+    <summary>查看该版本的 LaTeX 源码</summary>
+
+    <pre class="latex-source">{{
+      version.snapshot.latex_source
+    }}</pre>
+  </details>
+</div>
 
           <div
             v-if="version.snapshot.options.length > 0"
@@ -407,6 +420,19 @@ async function restoreVersion(versionNumber: number) {
   color: #17233c;
   font-size: 18px;
   line-height: 1.7;
+}
+
+.formula-block {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.source-details summary {
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .latex-source {
