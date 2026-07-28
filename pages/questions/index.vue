@@ -199,6 +199,13 @@ function nextPage() {
     + 录入新试题
   </NuxtLink>
 
+  <NuxtLink
+  class="batch-link"
+  to="/questions/batch"
+>
+  批量导入
+</NuxtLink>
+
   <button
     class="refresh-button"
     type="button"
@@ -528,6 +535,15 @@ function nextPage() {
   border-radius: 9px;
   color: white;
   background: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.batch-link {
+  padding: 10px 16px;
+  border-radius: 9px;
+  color: #7c3aed;
+  background: #ede9fe;
   font-weight: 700;
   text-decoration: none;
 }
