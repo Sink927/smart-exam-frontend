@@ -403,6 +403,13 @@ function nextPage() {
           </details>
           <div class="question-actions">
   <NuxtLink
+    class="edit-link"
+    :to="`/questions/${question.id}/edit`"
+  >
+    编辑试题
+  </NuxtLink>
+
+  <NuxtLink
     class="history-link"
     :to="`/questions/${question.id}/versions`"
   >
@@ -777,6 +784,15 @@ select:focus {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 16px;
+}
+
+.edit-link {
+  padding: 9px 14px;
+  border-radius: 8px;
+  color: #2563eb;
+  background: #dbeafe;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .history-link {
