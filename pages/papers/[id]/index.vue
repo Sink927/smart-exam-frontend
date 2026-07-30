@@ -346,15 +346,34 @@ function formatAnswer(
   return JSON.stringify(answer)
 }
 
-async function printPaper(
-  mode: 'none' | 'all',
+function downloadPdf(
+  documentType: 'student' | 'answer',
 ) {
-  answerMode.value = mode
+  const downloadUrl =
+    `${config.public.apiBase}`
+    + `/api/v1/exam-papers/${paperId}/export-pdf`
+    + `?document_type=${documentType}`
 
-  await loadPaper()
-  await nextTick()
+  window.open(
+    downloadUrl,
+    '_blank',
+    'noopener,noreferrer',
+  )
+}
 
-  window.print()
+function downloadDocx(
+  documentType: 'student' | 'answer',
+) {
+  const downloadUrl =
+    `${config.public.apiBase}`
+    + `/api/v1/exam-papers/${paperId}/export-docx`
+    + `?document_type=${documentType}`
+
+  window.open(
+    downloadUrl,
+    '_blank',
+    'noopener,noreferrer',
+  )
 }
 
 watch(answerMode, () => {
@@ -393,20 +412,36 @@ onMounted(() => {
   </label>
 
   <button
-    class="print-button"
-    type="button"
-    @click="printPaper('none')"
-  >
-    打印学生卷
-  </button>
+  class="word-download-button"
+  type="button"
+  @click="downloadDocx('student')"
+>
+  下载学生版Word
+</button>
+
+<button
+  class="word-download-button answer"
+  type="button"
+  @click="downloadDocx('answer')"
+>
+  下载答案版Word
+</button>
 
   <button
-    class="print-button"
-    type="button"
-    @click="printPaper('all')"
-  >
-    打印答案卷
-  </button>
+  class="pdf-download-button"
+  type="button"
+  @click="downloadPdf('student')"
+>
+  下载学生版PDF
+</button>
+
+<button
+  class="pdf-download-button answer"
+  type="button"
+  @click="downloadPdf('answer')"
+>
+  下载答案版PDF
+</button>
 
   <NuxtLink
   class="edit-paper-button"
@@ -964,8 +999,17 @@ onMounted(() => {
 
 .toolbar-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.toolbar-actions button,
+.toolbar-actions a,
+.answer-switch {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .answer-switch {
@@ -1483,6 +1527,33 @@ onMounted(() => {
   text-align: center;
 }
 
+.word-download-button {
+  padding: 10px 14px;
+  border: 1px solid #7c3aed;
+  border-radius: 10px;
+  color: #6d28d9;
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.word-download-button:hover {
+  color: #fff;
+  background: #7c3aed;
+}
+
+.word-download-button.answer {
+  border-color: #0891b2;
+  color: #0e7490;
+}
+
+.word-download-button.answer:hover {
+  color: #fff;
+  background: #0891b2;
+}
+
 @media (max-width: 900px) {
   .paper-columns {
   grid-template-columns: 1fr;
@@ -1528,6 +1599,7 @@ onMounted(() => {
   .toolbar-actions {
     align-items: stretch;
     flex-direction: column;
+    flex-wrap: wrap;
   }
 
   .paper-info-grid {
@@ -1613,13 +1685,46 @@ onMounted(() => {
   background: #2563eb;
 }
 
+.pdf-download-button {
+  padding: 10px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 10px;
+  color: #2563eb;
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pdf-download-button:hover {
+  color: #fff;
+  background: #2563eb;
+}
+
+.pdf-download-button.answer {
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+.pdf-download-button.answer:hover {
+  color: #fff;
+  background: #16a34a;
+}
+
 @page {
   size: 420mm 297mm;
   margin: 10mm;
 }
 
 @media print {
-    :global(html),
+.page-toolbar,
+.assembly-settings,
+.loading-state,
+.error-state {
+  display: none !important;
+}
+  :global(html),
   :global(body),
   :global(#__nuxt),
   :global(.app-shell) {
