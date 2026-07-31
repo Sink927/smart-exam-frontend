@@ -29,18 +29,21 @@ type ExamPaper = {
   sections: PaperSection[]
 }
 
-const config = useRuntimeConfig()
+const api = useApi()
 
 const {
   data: papers,
   pending,
   error,
   refresh,
-} = await useFetch<ExamPaper[]>(
-  '/api/v1/exam-papers',
+} = await useAsyncData<ExamPaper[]>(
+  'exam-papers',
+  () => api<ExamPaper[]>(
+    '/api/v1/exam-papers',
+  ),
   {
-    baseURL: config.public.apiBase,
     default: () => [],
+    server: false,
   },
 )
 
