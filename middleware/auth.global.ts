@@ -18,11 +18,14 @@ export default defineNuxtRouteMiddleware(
     }
 
     if (
-      to.path.startsWith('/users')
-      && !authStore.isAdmin
-    ) {
-      return navigateTo('/forbidden')
-    }
+  (
+    to.path.startsWith('/users')
+    || to.path.startsWith('/audit-logs')
+  )
+  && !authStore.isAdmin
+) {
+  return navigateTo('/forbidden')
+}
 
     if (
       to.path.startsWith('/papers')

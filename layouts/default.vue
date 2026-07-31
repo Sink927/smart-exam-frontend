@@ -80,6 +80,12 @@ const navigationItems: NavigationItem[] = [
     roles: ['admin', 'teacher'],
   },
   {
+  name: '操作日志',
+  path: '/audit-logs',
+  icon: '◎',
+  roles: ['admin'],
+},
+  {
     name: '用户管理',
     path: '/users',
     icon: '♙',
