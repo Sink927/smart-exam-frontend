@@ -3,6 +3,8 @@ definePageMeta({
   title: '系统概览',
 })
 
+const { $api } = useNuxtApp()
+
 const config = useRuntimeConfig()
 
 const {
@@ -19,16 +21,16 @@ const {
       knowledgePoints,
       questions,
     ] = await Promise.all([
-      $fetch(
+      $api(
         `${config.public.apiBase}/api/v1/courses`,
       ),
-      $fetch(
+      $api(
         `${config.public.apiBase}/api/v1/chapters`,
       ),
-      $fetch(
+      $api(
         `${config.public.apiBase}/api/v1/knowledge-points`,
       ),
-      $fetch(
+      $api(
         `${config.public.apiBase}/api/v1/questions`,
         {
           params: {

@@ -24,6 +24,8 @@ type CreatedPaper = {
   id: string
 }
 
+const { $api } = useNuxtApp()
+
 const config = useRuntimeConfig()
 
 const courses = ref<Course[]>([])
@@ -131,13 +133,13 @@ async function loadOptions() {
   try {
     const [courseData, templateData] =
       await Promise.all([
-        $fetch<Course[]>(
+        $api<Course[]>(
           '/api/v1/courses',
           {
             baseURL: config.public.apiBase,
           },
         ),
-        $fetch<ExamTemplate[]>(
+        $api<ExamTemplate[]>(
           '/api/v1/exam-templates',
           {
             baseURL: config.public.apiBase,
@@ -184,7 +186,7 @@ async function submitPaper() {
 
   try {
     const createdPaper =
-      await $fetch<CreatedPaper>(
+      await $api<CreatedPaper>(
         '/api/v1/exam-papers',
         {
           baseURL: config.public.apiBase,

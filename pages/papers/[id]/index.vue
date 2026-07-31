@@ -88,7 +88,7 @@ type AssemblyResult = {
 
 const route = useRoute()
 const config = useRuntimeConfig()
-
+const { $api } = useNuxtApp()
 const paperId = route.params.id as string
 const paper = ref<ExamPaperPreview | null>(null)
 const pending = ref(true)
@@ -155,7 +155,7 @@ async function loadKnowledgePoints(
 
   try {
     knowledgePoints.value =
-      await $fetch<KnowledgePoint[]>(
+      await $api<KnowledgePoint[]>(
         '/api/v1/knowledge-points',
         {
           baseURL: config.public.apiBase,
@@ -180,7 +180,7 @@ async function loadPaper() {
 
   try {
     const loadedPaper =
-      await $fetch<ExamPaperPreview>(
+      await $api<ExamPaperPreview>(
         `/api/v1/exam-papers/${paperId}/preview-data`,
         {
           baseURL: config.public.apiBase,
@@ -242,7 +242,7 @@ async function autoAssemble() {
 
   try {
     const result =
-      await $fetch<AssemblyResult>(
+      await $api<AssemblyResult>(
         `/api/v1/exam-papers/${paperId}/auto-assemble`,
         {
           baseURL: config.public.apiBase,

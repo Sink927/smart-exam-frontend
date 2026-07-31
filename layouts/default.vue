@@ -1,15 +1,103 @@
 <script setup lang="ts">
 const route = useRoute()
+const authStore = useAuthStore()
 
-const navigationItems = [
-  { name: '系统概览', path: '/', icon: '⌂' },
-  { name: '课程管理', path: '/courses', icon: '▤' },
-  { name: '章节管理', path: '/chapters', icon: '☷' },
-  { name: '知识点管理', path: '/knowledge-points', icon: '◇' },
-  { name: '试题管理', path: '/questions', icon: '✎' },
-  { name: '智能组卷', path: '/papers', icon: '▦' },
-  { name: '用户管理', path: '/users', icon: '♙' },
+const userDisplayName = computed(() => {
+  return (
+    authStore.user?.full_name
+    || authStore.user?.username
+    || '用户'
+  )
+})
+
+const userRoleLabel = computed(() => {
+  const labels = {
+    admin: '管理员',
+    teacher: '教师',
+    user: '普通用户',
+  }
+
+  return authStore.user
+    ? labels[authStore.user.role]
+    : '未登录'
+})
+
+const userAvatarText = computed(() => {
+  return userDisplayName.value
+    .slice(0, 1)
+    .toUpperCase()
+})
+
+async function handleLogout() {
+  authStore.logout()
+  await navigateTo('/login')
+}
+
+type UserRole = 'admin' | 'teacher' | 'user'
+
+type NavigationItem = {
+  name: string
+  path: string
+  icon: string
+  roles: UserRole[]
+}
+
+const navigationItems: NavigationItem[] = [
+  {
+    name: '系统概览',
+    path: '/',
+    icon: '⌂',
+    roles: ['admin', 'teacher', 'user'],
+  },
+  {
+    name: '课程管理',
+    path: '/courses',
+    icon: '▤',
+    roles: ['admin', 'teacher', 'user'],
+  },
+  {
+    name: '章节管理',
+    path: '/chapters',
+    icon: '☷',
+    roles: ['admin', 'teacher', 'user'],
+  },
+  {
+    name: '知识点管理',
+    path: '/knowledge-points',
+    icon: '◇',
+    roles: ['admin', 'teacher', 'user'],
+  },
+  {
+    name: '试题管理',
+    path: '/questions',
+    icon: '✎',
+    roles: ['admin', 'teacher', 'user'],
+  },
+  {
+    name: '智能组卷',
+    path: '/papers',
+    icon: '▦',
+    roles: ['admin', 'teacher'],
+  },
+  {
+    name: '用户管理',
+    path: '/users',
+    icon: '♙',
+    roles: ['admin'],
+  },
 ]
+
+const visibleNavigationItems = computed(() => {
+  const role = authStore.user?.role
+
+  if (!role) {
+    return []
+  }
+
+  return navigationItems.filter(
+    item => item.roles.includes(role),
+  )
+})
 
 const pageTitle = computed(() => {
   return String(route.meta.title || '系统概览')
@@ -38,7 +126,7 @@ function isActive(path: string) {
 
       <nav class="navigation">
         <NuxtLink
-          v-for="item in navigationItems"
+          v-for="item in visibleNavigationItems"
           :key="item.path"
           :to="item.path"
           class="navigation-item"
@@ -70,9 +158,27 @@ function isActive(path: string) {
             系统运行中
           </span>
 
-          <button class="user-avatar" type="button" title="管理员">
-            管
-          </button>
+          <div class="user-summary">
+  <div class="user-text">
+    <strong>{{ userDisplayName }}</strong>
+    <span>{{ userRoleLabel }}</span>
+  </div>
+
+  <div
+    class="user-avatar"
+    :title="userDisplayName"
+  >
+    {{ userAvatarText }}
+  </div>
+
+  <button
+    class="logout-button"
+    type="button"
+    @click="handleLogout"
+  >
+    退出登录
+  </button>
+</div>
         </div>
       </header>
 
@@ -281,6 +387,9 @@ select {
 }
 
 .user-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
   width: 40px;
   height: 40px;
   color: white;
@@ -288,7 +397,49 @@ select {
   border: 0;
   border-radius: 12px;
   background: #2563eb;
+}
+
+.user-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-text {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.user-text strong {
+  max-width: 140px;
+  overflow: hidden;
+  color: #172033;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-text span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.logout-button {
+  padding: 8px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  color: #475569;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
+}
+
+.logout-button:hover {
+  border-color: #fca5a5;
+  color: #b91c1c;
+  background: #fef2f2;
 }
 
 .page-content {

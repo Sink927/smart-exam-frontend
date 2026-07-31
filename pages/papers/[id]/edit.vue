@@ -24,7 +24,7 @@ type ExamPaper = {
 
 const route = useRoute()
 const config = useRuntimeConfig()
-
+const { $api } = useNuxtApp()
 const paperId = String(route.params.id)
 
 const loading = ref(true)
@@ -55,7 +55,7 @@ async function loadPaper() {
   errorMessage.value = ''
 
   try {
-    const paper = await $fetch<ExamPaper>(
+    const paper = await $api<ExamPaper>(
       `${config.public.apiBase}/api/v1/exam-papers/${paperId}`,
     )
 
@@ -89,7 +89,7 @@ async function savePaper() {
   errorMessage.value = ''
 
   try {
-    await $fetch(
+    await $api(
       `${config.public.apiBase}/api/v1/exam-papers/${paperId}`,
       {
         method: 'PATCH',
