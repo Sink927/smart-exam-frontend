@@ -88,6 +88,7 @@ type AssemblyResult = {
 
 const route = useRoute()
 const config = useRuntimeConfig()
+const api = useApi()
 const { $api } = useNuxtApp()
 const paperId = route.params.id as string
 const paper = ref<ExamPaperPreview | null>(null)
@@ -346,33 +347,70 @@ function formatAnswer(
   return JSON.stringify(answer)
 }
 
-function downloadPdf(
+async function downloadPaperFile(
+  format: 'pdf' | 'docx',
   documentType: 'student' | 'answer',
 ) {
-  const downloadUrl =
-    `${config.public.apiBase}`
-    + `/api/v1/exam-papers/${paperId}/export-pdf`
-    + `?document_type=${documentType}`
+  try {
+    const fileBlob = await api<Blob>(
+      `/api/v1/exam-papers/${paperId}/export-${format}`,
+      {
+        query: {
+          document_type: documentType,
+        },
+        responseType: 'blob',
+      },
+    )
 
-  window.open(
-    downloadUrl,
-    '_blank',
-    'noopener,noreferrer',
+    const fileUrl = URL.createObjectURL(
+      fileBlob,
+    )
+
+    const documentLabel =
+      documentType === 'answer'
+        ? '答案卷'
+        : '学生卷'
+
+    const paperTitle =
+      paper.value?.title || '考试试卷'
+
+    const downloadLink =
+      document.createElement('a')
+
+    downloadLink.href = fileUrl
+    downloadLink.download =
+      `${paperTitle}-${documentLabel}.${format}`
+
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    downloadLink.remove()
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(fileUrl)
+    }, 1000)
+  } catch (error: any) {
+    errorMessage.value =
+      error?.data?.detail
+      || error?.response?._data?.detail
+      || `${format.toUpperCase()}文件下载失败`
+  }
+}
+
+async function downloadPdf(
+  documentType: 'student' | 'answer',
+) {
+  await downloadPaperFile(
+    'pdf',
+    documentType,
   )
 }
 
-function downloadDocx(
+async function downloadDocx(
   documentType: 'student' | 'answer',
 ) {
-  const downloadUrl =
-    `${config.public.apiBase}`
-    + `/api/v1/exam-papers/${paperId}/export-docx`
-    + `?document_type=${documentType}`
-
-  window.open(
-    downloadUrl,
-    '_blank',
-    'noopener,noreferrer',
+  await downloadPaperFile(
+    'docx',
+    documentType,
   )
 }
 
